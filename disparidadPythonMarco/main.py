@@ -72,6 +72,7 @@ def main():
     
     plt.tight_layout()
     plt.show()
+    np.save("mapa_disparejo.npy", d_map)
 
 if __name__ == '__main__':
     main()
