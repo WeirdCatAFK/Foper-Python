@@ -1,6 +1,7 @@
 # Cálculo principal
 
-##disparidad.m
+## disparidad.m
+
 Es el script principal que ejecuta el cálculo de disparidad “por fuerza bruta”.
 
 Usa desplazamiento.m para encontrar el mejor desplazamiento entre ventanas locales.
@@ -183,7 +184,8 @@ light("position",[200 200 100],"style","infinite")
 zlabel([20,50]);
 ```
 
-##desplazamiento.m
+## desplazamiento.m
+
 Función auxiliar que calcula el desplazamiento óptimo (dx, dy) comparando dos parches.
 
 Para cada desplazamiento dentro de [-w, w] calcula: d= $ \frac {1}{N} $ $ \sum _ {i=1}^ {1} $ -1+1
@@ -218,12 +220,14 @@ end
 e=minimo;
 ```
 
-##estimacionFondo.m
+## estimacionFondo.m
+
 Calcula el modelo de fondo promedio de un video.
 Lee cada cuadro y hace un promedio acumulativo:
 
 $ M* {n+1} $ =(1- $ \frac {1}{n} $ ) $ M* {n} $ + $ \frac {1}{n} $ $ I\_ {n} $
 Útil para obtener una imagen “limpia” sin movimiento.
+
 ```matlab
 function Modelo=estimacionFondo(nVideo,cuadros)
 
@@ -259,7 +263,9 @@ end
 close(archivo);
 end
 ```
-##EstimacionImagenes.m
+
+## EstimacionImagenes.m
+
 Script que:
 
 Carga todos los videos .mp4 en la carpeta.
@@ -302,7 +308,8 @@ end
 
 # Variaciones
 
-##disparidadShi.m
+## disparidadShi.m
+
 Una versión más avanzada del cálculo de disparidad:
 
 Usa gradientes ([gc, gr] = gradient(imd)) para ayudar en la estimación.
@@ -310,6 +317,7 @@ Usa gradientes ([gc, gr] = gradient(imd)) para ayudar en la estimación.
 Llama a track, que parece una función de seguimiento óptico tipo Lucas-Kanade o Shi–Tomasi.
 
 Es más eficiente y más preciso, pero depende de una función externa track.m que no incluiste.
+
 ```matlab
 %% Algoritmo por fuerza bruta para realizar el mapa de disparidad
 clear all
@@ -480,7 +488,6 @@ Permite ejecutar:
 
 [M,NM,E] = disparidadBruto(im1, im2, salida, escala, GUI);
 
-
 y guarda resultados en salida.
 Es básicamente la misma lógica que el script principal, pero modularizada.
 
@@ -549,11 +556,13 @@ save(salida);
 ```
 
 ## disparidadBatch.m
+
 Ejecuta el proceso en lotes, usando pares de imágenes listadas en ds2006.txt.
 
 Llama a disparidadBruto repetidamente.
 
 Luego visualiza y genera superficies 3D y mapas de profundidad.
+
 ```matlab
 %Procesamiento en lotes
 clc
@@ -657,7 +666,9 @@ figure;
 %%
 mesh(NM);
 ```
+
 ## disparidadBatchShi
+
 Procesamiento en lotes utilizando la otra versión del algoritmo de disparidad
 
 ```matlab
