@@ -1,3 +1,7 @@
+*.png
+*.jpeg
+*.jpg
+__pycache__/
 Python/entradas/
 Python/resultados/
 resultados
