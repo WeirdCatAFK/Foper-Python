@@ -1,3 +1,5 @@
 __pycache__/
-resultados/
-entradas/
+resultados/*.npy
+resultados/*.jpg
+entradas/*.mp4
+entradas/*.jpg
