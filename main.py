@@ -4,7 +4,7 @@ import os
 
 
 if __name__ == "__main__":
-    # Cargamos 
+    # Cargamos los videos
     load_dotenv()
     ruta_videos = os.getenv("RUTA_VIDEOS")
     ruta_resultados = os.getenv("RUTA_RESULTADOS")

@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import numba
 
-@numba.njit(fastmath=True, parallel=True)
+@numba.njit(fastmath=True, parallel=True, cache=True)
 def _actualizar_modelo_jit(modelo_actual, imagen_gris, contador):
     """
     Función auxiliar compilada por Numba para actualizar el modelo de fondo.
