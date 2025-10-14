@@ -10,7 +10,7 @@ except:
 
 
 def calcular_mapa_disparidad(img_izquierda, img_derecha, radio_ventana, radio_busqueda):
-    print("Iniciando cálculo del mapa de disparidad (con Numba)...")
+    print("Iniciando cálculo del mapa de disparidad...")
 
     imi = img_izquierda.astype(np.float32) / 255.0
     imd = img_derecha.astype(np.float32) / 255.0
@@ -76,11 +76,11 @@ if __name__ == "__main__":
         # Visualización
         plt.figure(figsize=(12, 4))
         plt.subplot(1, 2, 1)
-        plt.title("Mapa de Disparidad (Numba)")
+        plt.title("Mapa de Disparidad")
         plt.imshow(mapa_disparidad, cmap="jet")
         plt.colorbar()
         plt.subplot(1, 2, 2)
-        plt.title("Mapa de Error (Numba)")
+        plt.title("Mapa de Error ")
         plt.imshow(mapa_error, cmap="jet")
         plt.colorbar()
         plt.show()
