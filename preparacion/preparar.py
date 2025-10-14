@@ -1,12 +1,18 @@
 import os
-try :
+
+try:
     from .estimacionFondo import estimar_fondo
 except ImportError:
     from estimacionFondo import estimar_fondo
 
 
 def preparar(
-    ruta_videos: str, ruta_imagenes: str, cuadros_a_procesar: int, escala: float = 1.0
+    ruta_videos: str,
+    ruta_imagenes: str,
+    cuadros_a_procesar: int,
+    escala: float = 1.0,
+    aplicar_suavizado: bool = False,
+    kernel_suavizado: tuple = (5, 5),
 ):
     """
     Estima el fondo de un video y si se le da una ruta guarda el resultado.
@@ -16,6 +22,8 @@ def preparar(
         ruta_imagenes (str): Ruta donde se guardaran las imagenes procesadas
         cuadros_a_procesar (int): Los frames por video
         escala (float): The scale factor to resize the frames (1.0 means original size).
+        aplicar_suavizado (bool): Activa o desactiva el suavizado Gaussiano.
+        kernel_suavizado (tuple): El tamaño del kernel para el suavizado.
     """
     os.makedirs(ruta_imagenes, exist_ok=True)
     videos_a_procesar = [
@@ -28,11 +36,11 @@ def preparar(
         f"Se procesarán {cuadros_a_procesar} cuadros de {len(videos_a_procesar)} videos encontrados."
     )
 
-    for i, nombre_video in enumerate(videos_a_procesar):
+    for nombre_video in videos_a_procesar:
         print(f"\nProcesando el video: {nombre_video}")
 
         ruta_completa_video = os.path.join(ruta_videos, nombre_video)
-        ruta_salida_imagen = os.path.join(ruta_imagenes, f"toma{i}.jpg")
+        ruta_salida_imagen = os.path.join(ruta_imagenes, f"{nombre_video.split('.')[0]}_fondo.jpg")
 
         try:
             estimar_fondo(
@@ -40,7 +48,10 @@ def preparar(
                 cuadros_a_procesar,
                 ruta_salida_imagen,
                 escala,
+                aplicar_suavizado,
+                kernel_suavizado,
             )
+
             print(
                 f"Modelo de fondo para '{nombre_video}' guardado en '{ruta_salida_imagen}'"
             )
@@ -54,4 +65,11 @@ if __name__ == "__main__":
     cuadros_a_procesar = 200
     escala = 1.0
 
-    preparar(ruta_videos, ruta_imagenes, cuadros_a_procesar, escala)
+    preparar(
+        ruta_videos,
+        ruta_imagenes,
+        cuadros_a_procesar,
+        escala,
+        aplicar_suavizado=True,
+        kernel_suavizado=(15, 15),
+    )
