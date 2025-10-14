@@ -7,11 +7,11 @@ import numpy as np
 
 
 try:
-    from disparidad.generar import calcular_mapa_disparidad
-    from preparacion.preparar import preparar
-except ImportError:
     from .disparidad.generar import calcular_mapa_disparidad
     from .preparacion.preparar import preparar
+except ImportError:
+    from disparidad.generar import calcular_mapa_disparidad
+    from preparacion.preparar import preparar
     
 
 if __name__ == "__main__":
