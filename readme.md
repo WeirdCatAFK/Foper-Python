@@ -18,3 +18,23 @@ Las siguientes carpetas contiene código que genera recursos
   Aquí se guardan los archivos generados de la disparidad y recon
 
 main.py es el archivo que orquestra todas las actividades en un solo pipeline, edita el archivo.env para cambiar los parámetros de procesamiento de los videos
+
+## Uso del proyecto
+
+Arrastra videos a la carpeta de entradas en formato .mp4
+
+Este proyecto procesa n archivos y sus disparidades
+
+Nombra tus archivos de video de tal manera que los videos de los que necesites calcular su disparidad de manera consecutiva
+
+Por ejemplo
+
+Tienes tus archivos:
+
+```
+entradas
+├── Toma0.mp4
+└── Toma1.mp4
+```
+
+El código generara la disparidad de Toma0-Toma1, generara sus matrices en la carpeta de resultados en /disparidades

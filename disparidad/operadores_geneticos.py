@@ -1,6 +1,10 @@
 import numpy as np
 from numba import njit
-from codificacion import cod # Se importa la función ya optimizada
+
+try:
+    from .codificacion import cod
+except ImportError:
+    from codificacion import cod
 
 @njit
 def inicializacion(a, b, epsilon, m, n_individuos):
