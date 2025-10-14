@@ -17,4 +17,4 @@ Las siguientes carpetas contiene código que genera recursos
 - resultados
   Aquí se guardan los archivos generados de la disparidad y recon
 
-main.py es el archivo que orquestra todas las actividades en un solo pipeline
+main.py es el archivo que orquestra todas las actividades en un solo pipeline, edita el archivo.env para cambiar los parámetros de procesamiento de los videos
