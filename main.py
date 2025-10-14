@@ -1,12 +1,18 @@
-from preparacion.preparar import preparar
+
 from dotenv import load_dotenv
 import time
 import os
 import cv2
 import numpy as np
-# Asegúrate de que el nombre del archivo donde está la función sea 'generar_disparidad'
-# o ajústalo según sea necesario.
-from disparidad.generar import calcular_mapa_disparidad
+
+
+try:
+    from disparidad.generar import calcular_mapa_disparidad
+    from preparacion.preparar import preparar
+except ImportError:
+    from .disparidad.generar import calcular_mapa_disparidad
+    from .preparacion.preparar import preparar
+    
 
 if __name__ == "__main__":
     # ---- 1. Carga de Configuración y Preparación de Imágenes ----
