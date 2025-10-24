@@ -2,6 +2,8 @@
 
 ## Estructura del proyecto
 
+-- ALERTA la carpeta calibracionDron y reconstruccion ya tienen algoritmo pero no han sido verificados su correcto funcionamiento
+
 Las carpetas que empiezan con \_ son código heredado como prueba de concepto, y es referencial y no tan relevante
 
 Las siguientes carpetas contiene código que genera recursos
