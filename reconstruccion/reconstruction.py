@@ -102,7 +102,7 @@ def save_point_cloud_to_ply(points, filename):
 
     with open(filename, "w", encoding="utf-8") as f:
         f.write("\n".join(header))
-        for (x, y, z), (r, g, b) in zip(points_norm, colors_rgb):
+        for (x, y, z), (r, g, b) in zip(points, colors_rgb):
             f.write(f"{x:.6f} {y:.6f} {z:.6f} {r} {g} {b}\n")
 
     print(f"File saved successfully to '{filename}' with {n_points} points.")
