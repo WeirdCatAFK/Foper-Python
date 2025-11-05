@@ -1,133 +1,144 @@
 import numpy as np
+from numba import njit, prange
 from dataclasses import dataclass
-from reconstruction import CameraConfig, reconstruct_3d_from_disparity, save_point_cloud_to_ply
-
-"""
-Este módulo proporciona funciones para reconstruir una nube de puntos 3D a partir de un mapa de disparidad utilizando los parámetros de una cámara estéreo.
-
-Para utilizar este módulo en otro script, primero debes importar el objeto de configuración `CameraConfig` y definir los parámetros de tu cámara. Luego, sigue este orden de llamadas:
-
-1. Crea una instancia de `CameraConfig` con los parámetros intrínsecos y extrínsecos de tu cámara.
-2. Obtén o genera un mapa de disparidad (matriz 2D de tipo float).
-3. Llama a la función `reconstruct_3d_from_disparity(disparity_map, config)` para obtener la nube de puntos 3D.
-4. Llama a la función `save_point_cloud_to_ply(points, filename)` para guardar la nube de puntos en un archivo PLY.
-
-Ejemplo de uso:
-
-    config = CameraConfig(fx=..., fy=..., cx=..., cy=..., baseline=...)
-    disparity_map = ...  # Cargar o calcular el mapa de disparidad
-    points_3d = reconstruct_3d_from_disparity(disparity_map, config)
-    save_point_cloud_to_ply(points_3d, 'output.ply')
-"""
+import matplotlib.pyplot as plt
+import os
+from dotenv import load_dotenv
 
 @dataclass
 class CameraConfig:
-    """
-    Almacena los parámetros intrínsecos y extrínsecos de una configuración de cámara estéreo.
-    """
-    # Matriz intrínseca (K)
-    fx: float  # Distancia focal en el eje x (en píxeles)
-    fy: float  # Distancia focal en el eje y (en píxeles)
-    cx: float  # Punto principal en x (centro óptico)
-    cy: float  # Punto principal en y (centro óptico)
+    """Intrinsic and extrinsic parameters of a stereo camera."""
+    fx: float
+    fy: float
+    cx: float
+    cy: float
+    baseline: float
 
-    # Parámetro extrínseco principal para estéreo
-    baseline: float  # Distancia entre los centros de las dos cámaras (en metros)
+@njit(parallel=True, fastmath=True)
+def reconstruct_3d_from_disparity_numba(disparity_map, fx, fy, cx, cy, baseline):
+    """
+    Parallelized calculation of 3D coordinates from the disparity map.
+
+    Args:
+        disparity_map : 2D matrix with disparity values (>0)
+        fx, fy, cx, cy, baseline : Camera parameters
+
+    Returns:
+        np.ndarray : (N, 3) matrix with 3D coordinates (X, Y, Z)
+    """
+    h, w = disparity_map.shape
+    count = 0
+
+    for v in prange(h):
+        for u in range(w):
+            if disparity_map[v, u] > 0:
+                count += 1
+
+    points = np.zeros((count, 3), dtype=np.float64)
+    idx = 0
+
+    for v in prange(h):
+        for u in range(w):
+            d = disparity_map[v, u]
+            if d > 0:
+                Z = (fx * baseline) / d
+                X = (u - cx) * Z / fx
+                Y = (v - cy) * Z / fy
+                points[idx, 0] = X
+                points[idx, 1] = Y
+                points[idx, 2] = Z
+                idx += 1
+
+    return points
+
 
 def reconstruct_3d_from_disparity(disparity_map: np.ndarray, config: CameraConfig) -> np.ndarray:
     """
-    Reconstruye una nube de puntos 3D a partir de un mapa de disparidad utilizando el método de triangulación.
-
-    Args:
-        disparity_map: Matriz 2D (H, W) de NumPy con los valores de disparidad.
-        config: Objeto CameraConfig con los parámetros de la cámara.
-
-    Returns:
-        Una matriz de NumPy de forma (N, 3) que representa la nube de puntos 3D,
-        donde N es el número de puntos válidos.
+    Reconstructs a 3D point cloud from a disparity map.
     """
-    h, w = disparity_map.shape
-    
-    # Crear una máscara para ignorar disparidades inválidas (cero o negativas)
-    valid_mask = disparity_map > 0
+    points = reconstruct_3d_from_disparity_numba(
+        disparity_map,
+        config.fx, config.fy,
+        config.cx, config.cy,
+        config.baseline
+    )
 
-    # Calcular la profundidad (coordenada Z) para todos los píxeles válidos a la vez.
-    # La fórmula fundamental es: Z = (focal_length * baseline) / disparity
-    Z = np.zeros_like(disparity_map, dtype=float)
-    Z[valid_mask] = (config.fx * config.baseline) / disparity_map[valid_mask]
+    if points.size == 0:
+        raise ValueError("No valid points were generated.")
+    points = points[~np.isnan(points).any(axis=1)]
+    points = points[~np.isinf(points).any(axis=1)]
 
-    # Crear una malla de coordenadas de píxeles (u, v)
-    u_coords = np.arange(w)
-    v_coords = np.arange(h)
-    u_grid, v_grid = np.meshgrid(u_coords, v_coords)
+    return points
 
-    # Calcular las coordenadas X e Y usando las ecuaciones del modelo de cámara estenopeica (pinhole)
-    # X = (u - cx) * Z / fx
-    # Y = (v - cy) * Z / fy
-    X = (u_grid - config.cx) * Z / config.fx
-    Y = (v_grid - config.cy) * Z / config.fy
-
-    # Apilar las coordenadas (X, Y, Z) en una sola matriz
-    points_3d = np.stack((X, Y, Z), axis=-1)
-
-    # Filtrar solo los puntos 3D que corresponden a disparidades válidas
-    valid_points = points_3d[valid_mask]
-
-    return valid_points
-
-def save_point_cloud_to_ply(points: np.ndarray, filename: str):
+def save_point_cloud_to_ply(points, filename):
     """
-    Guarda una nube de puntos en un archivo de formato PLY.
-
-    Args:
-        points: Matriz de NumPy de forma (N, 3) con los puntos 3D.
-        filename: Nombre del archivo de salida (ej. 'nube_de_puntos.ply').
+    Saves a set of XYZ points in PLY format (ASCII).
+    If colors do not exist, they are assigned based on normalized Z height.
     """
-    with open(filename, 'w') as f:
-        f.write("ply\n")
-        f.write("format ascii 1.0\n")
-        f.write(f"element vertex {len(points)}\n")
-        f.write("property float x\n")
-        f.write("property float y\n")
-        f.write("property float z\n")
-        f.write("end_header\n")
-        np.savetxt(f, points, fmt='%f %f %f')
-    print(f"Nube de puntos guardada en '{filename}'")
+    points = np.asarray(points, dtype=np.float64)
+
+    centroid = points.mean(axis=0)
+    points_centered = points - centroid
+    max_range = np.abs(points_centered).max()
+    points_norm = points_centered / (max_range + 1e-8)
+
+    z_norm = (points_norm[:, 2] - points_norm[:, 2].min()) / (np.ptp(points_norm[:, 2]) + 1e-8)
+    colors = (z_norm * 255).astype(np.uint8)
+    colors_rgb = np.stack([colors, 255 - colors, (colors // 2)], axis=1)
+
+    n_points = points.shape[0]
+    header = [
+        "ply",
+        "format ascii 1.0",
+        f"element vertex {n_points}",
+        "property float x",
+        "property float y",
+        "property float z",
+        "property uchar red",
+        "property uchar green",
+        "property uchar blue",
+        "end_header\n"
+    ]
+
+    with open(filename, "w", encoding="utf-8") as f:
+        f.write("\n".join(header))
+        for (x, y, z), (r, g, b) in zip(points_norm, colors_rgb):
+            f.write(f"{x:.6f} {y:.6f} {z:.6f} {r} {g} {b}\n")
+
+    print(f"File saved successfully to '{filename}' with {n_points} points.")
 
 
 if __name__ == '__main__':
-    # --- 1. Configuración de Parámetros ---
-    # Estos son valores de ejemplo. Debes reemplazarlos con los parámetros
-    # reales de tu cámara, obtenidos a través de un proceso de calibración.
+    load_dotenv()
+    ESCALA = float(os.getenv("ESCALA_DE_PROCESAMIENTO")) # Get the same scale
+
     config = CameraConfig(
-        fx=800.0,
-        fy=800.0,
-        cx=320.0,
-        cy=240.0,
-        baseline=0.12  # 12 cm
+        fx = 5963.9 * ESCALA,
+        fy = 5952.8 * ESCALA,
+        cx = 3808.0 * ESCALA,
+        cy = 2139.4 * ESCALA,
+        baseline = 0.12 
     )
 
-    # --- 2. Creación de una Matriz de Disparidad de Ejemplo ---
-    # En un caso real, esta matriz sería la salida de un algoritmo de correspondencia estéreo
-    # (ej. SGBM de OpenCV). Aquí, creamos un gradiente simple para la demostración.
-    image_height, image_width = 480, 640
-    disparity_map_example = np.zeros((image_height, image_width), dtype=np.float32)
-    
-    # Simula un plano inclinado: la disparidad disminuye con la distancia (mayor u)
-    gradient = np.linspace(64, 16, image_width)
-    disparity_map_example[:, :] = gradient
-    
-    # Simula un objeto más cercano en el centro
-    center_x, center_y = image_width // 2, image_height // 2
-    disparity_map_example[center_y-50:center_y+50, center_x-50:center_x+50] = 96.0
-    
-    print(f"Mapa de disparidad de ejemplo creado con dimensiones: {disparity_map_example.shape}")
+    testPath = "./resultados/disparidad/TestEscala1a1A.npy"
+    if testPath and os.path.exists(testPath):
+        disparity_map = np.load(testPath)
+        print(f"Disparity map loaded from: {testPath} ({disparity_map.shape})")
+    else:
+        image_height, image_width = 480, 640
+        disparity_map = np.zeros((image_height, image_width), dtype=np.float32)
 
-    # --- 3. Reconstrucción 3D ---
-    print("Iniciando reconstrucción 3D...")
-    point_cloud = reconstruct_3d_from_disparity(disparity_map_example, config)
-    print(f"Reconstrucción completa. Se generaron {len(point_cloud)} puntos 3D.")
+        gradient = np.linspace(64, 16, image_width)
+        disparity_map[:, :] = gradient
 
-    # --- 4. Guardado de la Nube de Puntos ---
+        cx, cy = image_width // 2, image_height // 2
+        disparity_map[cy-50:cy+50, cx-50:cx+50] = 96.0
+        print(f"Example disparity map created with dimensions: {disparity_map.shape}")
+
+    print("Starting 3D reconstruction...")
+    point_cloud = reconstruct_3d_from_disparity(disparity_map, config)
+    print(f"Reconstruction complete. {len(point_cloud)} 3D points generated.")
+
     output_filename = 'nube_de_puntos.ply'
     save_point_cloud_to_ply(point_cloud, output_filename)
+    print(f"Point cloud saved to: {output_filename}")

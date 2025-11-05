@@ -1,6 +1,7 @@
 import numpy as np
 from numba import njit
 
+# Importa la función 'cod' ya optimizada
 try:
     from .codificacion import cod
 except ImportError:
@@ -9,7 +10,7 @@ except ImportError:
 @njit
 def inicializacion(a, b, epsilon, m, n_individuos):
     """
-    Genera una población inicial para el algoritmo genético. (Compilado con Numba)
+    Genera una población inicial. (Compilado con Numba)
     """
     pts = np.zeros((n_individuos, m[0] + m[1]), dtype=np.int32)
     
@@ -22,11 +23,12 @@ def inicializacion(a, b, epsilon, m, n_individuos):
         dna_y = cod(a[1], b[1], epsilon, pts_reales_y[i], m[1])
         pts[i, :] = np.concatenate((dna_x, dna_y))
         
-    # Numba no puede devolver dos tipos diferentes (pts y pts_reales) fácilmente en una tupla
-    # por lo que se devuelve solo la población binaria. La real se recalcula fuera.
     return pts
 
 def seleccion(puntos, fitness):
+    """
+    Selecciona los mejores individuos. (np.argsort es rápido, no necesita Numba)
+    """
     indices_ordenados = np.argsort(fitness)
     n_seleccionados = puntos.shape[0] // 2
     return indices_ordenados[:n_seleccionados]
@@ -43,7 +45,7 @@ def cruza(padre1, padre2):
     return hijo1
 
 def cruzamiento(puntos):
-    """ Aplica cruce a la población. """
+    """ Aplica cruce a la población. (Función envoltorio, no necesita Numba) """
     n_padres = puntos.shape[0]
     hijos = np.zeros_like(puntos)
     
@@ -63,7 +65,7 @@ def mutacion(individuo, n_genes_a_mutar):
     return individuo
 
 def mutar(puntos, prob_mutacion):
-    """ Aplica mutación a la población. """
+    """ Aplica mutación a la población. (Función envoltorio, no necesita Numba) """
     n_individuos = puntos.shape[0]
     n_a_mutar = int(n_individuos * prob_mutacion)
     indices_mut = np.random.choice(n_individuos, n_a_mutar, replace=False)

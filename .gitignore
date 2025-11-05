@@ -4,4 +4,5 @@ resultados/*.jpg
 entradas/*.mp4
 entradas/*.jpg
 resultados/imagenes/
-venv/
+resultados/disparidad/
+resultados/reconstructions/

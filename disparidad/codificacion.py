@@ -18,9 +18,10 @@ def cod_inv(a, b, epsilon, n, p):
     """
     Decodifica una representación binaria a un valor real. (Compilado con Numba)
     """
-    decimal_val = 0
+    # Reemplazamos np.dot con un bucle manual para evitar errores de tipo en Numba
+    decimal_val = np.int64(0)
     for i in range(len(n)):
-        decimal_val += n[i] * p[i]
+        decimal_val += np.int64(n[i]) * np.int64(p[i])
         
     return a + epsilon * float(decimal_val)
 

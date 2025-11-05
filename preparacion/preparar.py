@@ -40,7 +40,7 @@ def preparar(
         print(f"\nProcesando el video: {nombre_video}")
 
         ruta_completa_video = os.path.join(ruta_videos, nombre_video)
-        ruta_salida_imagen = os.path.join(ruta_imagenes, f"{nombre_video.split('.')[0]}_fondo.jpg")
+        ruta_salida_imagen = os.path.join(ruta_imagenes, f"{nombre_video.split('.')[0]}.jpg")
 
         try:
             estimar_fondo(
