@@ -3,10 +3,18 @@ import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 import multiprocessing
+import os
+from dotenv import load_dotenv
 try:
     from .genetico import genetico
 except ImportError:
     from genetico import genetico
+
+load_dotenv()
+NUCLEOS = int(os.getenv("NUCLEOS")) 
+
+GENERACIONES = int(os.getenv("GENERACIONES"))
+POBLACION = int(os.getenv("POBLACION"))
 
 # ----------------------------------------------------------------------------
 # PASO 1: Definir variables globales para los workers y la función init
@@ -100,8 +108,8 @@ def calcular_mapa_disparidad(img_izquierda, img_derecha, radio_ventana, radio_bu
     x_range = range(radio_ventana, w - radio_ventana)
 
     ga_params = {
-        'n_generaciones': 100,
-        'n_individuos': 1000,
+        'n_generaciones': GENERACIONES,
+        'n_individuos': POBLACION,
         'prob_mutacion': 0.01,
         'r_paciencia': 5
     }
@@ -131,7 +139,7 @@ def calcular_mapa_disparidad(img_izquierda, img_derecha, radio_ventana, radio_bu
     # ----------------------------------------------------------------------------
     # PASO 4: Crear el Pool con el 'initializer'
     # ----------------------------------------------------------------------------
-    num_cores = 10
+    num_cores = NUCLEOS
     print(f"Creando un Pool con {num_cores} procesos...")
     
     results = []
@@ -145,7 +153,6 @@ def calcular_mapa_disparidad(img_izquierda, img_derecha, radio_ventana, radio_bu
         initargs=(imi, imd)
     ) as pool:
         
-        # El resto del código no cambia
         results = list(tqdm(
             pool.imap(
                 _worker_procesar_ventana, 
@@ -157,7 +164,7 @@ def calcular_mapa_disparidad(img_izquierda, img_derecha, radio_ventana, radio_bu
         ))
 
     # ----------------------------------------------------------------------------
-    # PASO 5: Ensamblar resultados (sin cambios)
+    # PASO 5: Ensamblar resultados 
     # ----------------------------------------------------------------------------
     print("\nProcesamiento paralelo completado. Ensamblando mapas...")
     for y, x, dx, error in results:
@@ -169,7 +176,7 @@ def calcular_mapa_disparidad(img_izquierda, img_derecha, radio_ventana, radio_bu
     return mapa_disparidad_dx, E
 
 
-# ---- Bloque de Pruebas (Sin cambios) ----
+# ---- Bloque de Pruebas ----
 if __name__ == "__main__":
     try:
         img_i = cv2.imread("./resultados/imagenes/toma0.jpg", cv2.IMREAD_GRAYSCALE)
